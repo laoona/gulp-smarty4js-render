@@ -1,0 +1,29 @@
+{
+  "name": "gulp-smarty4js-render",
+  "version": "0.0.1",
+  "description": "a gulp plugin for smarty4js render to html",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/laoono/gulp-smarty4js-render.git"
+  },
+  "keywords": [
+    "gulp-smarty4js-render",
+    "smarty4js",
+    "smarty"
+  ],
+  "author": "laoono@163.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/laoono/gulp-smarty4js-render/issues"
+  },
+  "homepage": "https://github.com/laoono/gulp-smarty4js-render#readme",
+  "devDependencies": {
+    "gulp-util": "^3.0.8",
+    "smarty4js": "^0.1.8",
+    "through2": "^2.0.3"
+  }
+}

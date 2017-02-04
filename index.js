@@ -28,8 +28,18 @@ function render(options) {
             return cb();
         }
 
-        const compiler = s.compile(file.path);
-        var html = compiler.render();
+        var compiler;
+        var html = '';
+        try {
+            compiler = s.compile(file.path);
+            html = compiler.render();
+        } catch (e) {
+            html = '';
+            compiler = null;
+
+            this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+            return cb();
+        }
 
         if (file.isStream()) {
             this.emit('error', new gutil.PluginError('gulp-smarty4js-render', 'Streaming not supported'));

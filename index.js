@@ -10,7 +10,7 @@
 
 const through = require('through2');
 const gutil = require('gulp-util');
-const Smarty = require('smarty4js');
+const Smarty = require('./lib/smarty4js');
 const s = new Smarty();
 
 function render(options) {

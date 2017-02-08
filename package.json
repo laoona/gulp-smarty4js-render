@@ -1,6 +1,6 @@
 {
   "name": "gulp-smarty4js-render",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "a gulp plugin for smarty4js render to html",
   "main": "index.js",
   "scripts": {
@@ -24,12 +24,10 @@
   "homepage": "https://github.com/laoono/gulp-smarty4js-render#readme",
   "devDependencies": {
     "gulp-util": "^3.0.8",
-    "smarty4js": "^0.1.8",
     "through2": "^2.0.3"
   },
   "dependencies": {
     "gulp-util": "^3.0.8",
-    "smarty4js": "^0.1.8",
     "through2": "^2.0.3"
   }
 }

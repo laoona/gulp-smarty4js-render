@@ -46,6 +46,10 @@ Default: `}}`
 Type: `String`  
 Default: ``
 
+##### options.templateDataDir
+Type: `String`  
+Default: ``
+
 ```javascript
 // if compile source is template code and have `include, extend...` sentence in code
 

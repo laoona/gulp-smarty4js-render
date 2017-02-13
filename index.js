@@ -13,6 +13,19 @@ const gutil = require('gulp-util');
 const Smarty = require('./lib/smarty4js');
 const s = new Smarty();
 
+const path = require('path');
+const fs = require('fs');
+const load = require('load-json-file');
+
+function getFileName(npath) {
+    if (typeof npath !== 'string') return npath;
+    if (npath.length === 0) return npath;
+
+    var name = path.basename(npath, path.extname(npath));
+
+    return name;
+}
+
 function render(options) {
     options = options || {};
 
@@ -22,6 +35,8 @@ function render(options) {
     let baseDir = options.baseDir;
     baseDir && s.setBasedir(baseDir);
 
+    let templateDataDir = options.templateDataDir;
+
     return through.obj(function (file, enc, cb) {
         if (file.isNull()) {
             this.push(file);
@@ -30,9 +45,25 @@ function render(options) {
 
         var compiler;
         var html = '';
+        var dataFile = '';
+        var data = {};
+
+        if (templateDataDir) {
+            dataFile = [templateDataDir, '/', getFileName(file.path), '.json'].join('');
+        }
+
+        try {
+            if (fs.existsSync(dataFile)) {
+                data = load.sync(dataFile);
+            }
+        } catch (e) {
+            this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+            return cb();
+        }
+
         try {
             compiler = s.compile(file.path);
-            html = compiler.render();
+            html = compiler.render(data);
         } catch (e) {
             html = '';
             compiler = null;

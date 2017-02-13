@@ -46,7 +46,7 @@ Default: `}}`
 Type: `String`  
 Default: ``
 
-##### options.templateDataDir
+##### options.templatesDataDir
 Type: `String`  
 Default: ``
 

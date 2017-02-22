@@ -16,6 +16,7 @@ const s = new Smarty();
 const path = require('path');
 const fs = require('fs');
 const load = require('load-json-file');
+const request = require('then-request');
 
 function getFileName(npath) {
     if (typeof npath !== 'string') return npath;
@@ -24,6 +25,36 @@ function getFileName(npath) {
     var name = path.basename(npath, path.extname(npath));
 
     return name;
+}
+
+function getDataManifestVal(dataManifest, filePath, baseDir) {
+
+    dataManifest = dataManifest || {};
+    filePath = path.normalize(filePath);
+    baseDir = baseDir || '';
+
+    let res = '';
+    let dMArr = Object.keys(dataManifest);
+    let len = dMArr.length;
+    let n = 0;
+
+    for (n; n < len; n++) {
+
+        let k = dMArr[n];
+        let dMval = dataManifest[k];
+        let tmpFilePath = '';
+
+        tmpFilePath = (/^[\/\\]/gi.test(k)) ? k : (baseDir + '/' + k);
+
+        tmpFilePath = path.normalize(tmpFilePath);
+
+        if (filePath === tmpFilePath) {
+            res = dMval;
+            break;
+        }
+    }
+
+    return res;
 }
 
 function render(options) {
@@ -36,15 +67,19 @@ function render(options) {
     baseDir && s.setBasedir(baseDir);
 
     let templateDataDir = options.templateDataDir;
+    let dataManifest = options.dataManifest || {};
 
     return through.obj(function (file, enc, cb) {
+
         if (file.isNull()) {
             this.push(file);
             return cb();
         }
 
-        var compiler;
-        var html = '';
+        if (file.isStream()) {
+            this.emit('error', new gutil.PluginError('gulp-smarty4js-render', 'Streaming not supported'));
+        }
+
         var dataFile = '';
         var data = {};
 
@@ -61,28 +96,50 @@ function render(options) {
             return cb();
         }
 
-        try {
-            compiler = s.compile(file.path);
-            html = compiler.render(data);
-        } catch (e) {
-            html = '';
-            compiler = null;
+        var _me = this;
 
-            this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+        var compileAsync = function (data, file, enc, cb) {
+            var compiler = null;
+            var html = '';
+
+            try {
+                compiler = s.compile(file.path);
+                html = compiler.render(data);
+            } catch (e) {
+                html = '';
+                compiler = null;
+
+                this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+                return cb();
+            }
+
+            if (file.isBuffer()) {
+                file.contents = new Buffer(html);
+                file.path = gutil.replaceExtension(file.path, '.html');
+            }
+
+            this.push(file);
             return cb();
-        }
+        };
 
-        if (file.isStream()) {
-            this.emit('error', new gutil.PluginError('gulp-smarty4js-render', 'Streaming not supported'));
-        }
+        let dMVal = getDataManifestVal(dataManifest, file.path, baseDir);
 
-        if (file.isBuffer()) {
-            file.contents = new Buffer(html);
-            file.path = gutil.replaceExtension(file.path, '.html');
-        }
+        if (dMVal.length) {
+            request('GET', dMVal).done(function (res) {
 
-        this.push(file);
-        cb();
+                var data = (res.getBody().toString());
+
+                try {
+                    data = JSON.parse(data);
+                    compileAsync.apply(_me, [data, file, enc, cb]);
+                } catch (e) {
+                    this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+                    return cb();
+                }
+            });
+        } else {
+            compileAsync.apply(_me, [data, file, enc, cb]);
+        }
     });
 }
 

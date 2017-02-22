@@ -50,6 +50,10 @@ Default: ``
 Type: `String`  
 Default: ``
 
+##### options.dataManifest
+Type: `Object`  
+Default: `{}`
+
 ```javascript
 // if compile source is template code and have `include, extend...` sentence in code
 

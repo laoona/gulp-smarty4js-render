@@ -68,6 +68,24 @@ function render(options) {
 
     let templateDataDir = options.templateDataDir;
     let dataManifest = options.dataManifest || {};
+    let rootDir = options.rootDir || '';
+    let constPath = options.constPath || '';
+    let commonConst = null;
+
+    if (!/^[\/\\].+/gi.test(constPath)) {
+        constPath = rootDir + '/' + constPath;
+    }
+
+    constPath = path.normalize(constPath);
+
+    try {
+        if (options.constPath && fs.existsSync(constPath)) {
+            commonConst = load.sync(constPath);
+        }
+    } catch (e) {
+        this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+        return cb();
+    }
 
     return through.obj(function (file, enc, cb) {
 
@@ -101,6 +119,8 @@ function render(options) {
         var compileAsync = function (data, file, enc, cb) {
             var compiler = null;
             var html = '';
+
+            Object.assign(data, commonConst);
 
             try {
                 compiler = s.compile(file.path);

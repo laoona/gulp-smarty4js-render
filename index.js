@@ -89,6 +89,7 @@ function render(options) {
 
     return through.obj(function (file, enc, cb) {
 
+        var self = this;
         if (file.isNull()) {
             this.push(file);
             return cb();
@@ -153,7 +154,7 @@ function render(options) {
                     data = JSON.parse(data);
                     compileAsync.apply(_me, [data, file, enc, cb]);
                 } catch (e) {
-                    this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+                    self.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
                     return cb();
                 }
             });

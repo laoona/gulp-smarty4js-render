@@ -34,6 +34,7 @@ function getDataManifestVal(dataManifest, filePath, baseDir) {
     baseDir = baseDir || '';
 
     let res = '';
+    let key = '';
     let dMArr = Object.keys(dataManifest);
     let len = dMArr.length;
     let n = 0;
@@ -44,17 +45,21 @@ function getDataManifestVal(dataManifest, filePath, baseDir) {
         let dMval = dataManifest[k];
         let tmpFilePath = '';
 
-        tmpFilePath = (/^[\/\\]/gi.test(k)) ? k : (baseDir + '/' + k);
+        tmpFilePath = (/^[\/\\]/gi.test(k)) ? k : path.resolve(baseDir, k);
 
         tmpFilePath = path.normalize(tmpFilePath);
 
         if (filePath === tmpFilePath) {
             res = dMval;
+            key = k;
             break;
         }
     }
 
-    return res;
+    return {
+        key: key,
+        value: res
+    };
 }
 
 function render(options) {
@@ -62,6 +67,7 @@ function render(options) {
 
     s.conf.left_delimiter = options.left_delimiter || '{{';
     s.conf.right_delimiter = options.right_delimiter || '}}';
+    s.conf.rootDir = options.rootDir;
 
     let baseDir = options.baseDir;
     baseDir && s.setBasedir(baseDir);
@@ -72,15 +78,19 @@ function render(options) {
     let constPath = options.constPath || '';
     let commonConst = null;
 
-    if (!/^[\/\\].+/gi.test(constPath)) {
-        constPath = rootDir + '/' + constPath;
-    }
-
-    constPath = path.normalize(constPath);
+    let constPathTemp = path.resolve(templateDataDir, constPath);
+    let constPathRoot = path.resolve(rootDir, constPath);
 
     try {
-        if (options.constPath && fs.existsSync(constPath)) {
-            commonConst = load.sync(constPath);
+        if (options.constPath) {
+            switch (true) {
+                case fs.existsSync(constPathTemp):
+                    commonConst = load.sync(constPathTemp);
+                    break;
+                case fs.existsSync(constPathRoot):
+                    commonConst = load.sync(constPathRoot);
+                    break;
+            }
         }
     } catch (e) {
         this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
@@ -101,19 +111,6 @@ function render(options) {
 
         var dataFile = '';
         var data = {};
-
-        if (templateDataDir) {
-            dataFile = [templateDataDir, '/', getFileName(file.path), '.json'].join('');
-        }
-
-        try {
-            if (fs.existsSync(dataFile)) {
-                data = load.sync(dataFile);
-            }
-        } catch (e) {
-            this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
-            return cb();
-        }
 
         var _me = this;
 
@@ -143,23 +140,54 @@ function render(options) {
             return cb();
         };
 
-        let dMVal = getDataManifestVal(dataManifest, file.path, baseDir);
+        let dM = getDataManifestVal(dataManifest, file.path, baseDir);
+        let dMVal = dM.value;
+        let dMKey = dM.key.replace(/[\/\\]/gi, '-');
+        var valDataFile = path.resolve(templateDataDir, dMVal);
 
-        if (dMVal.length) {
-            request('GET', dMVal).done(function (res) {
+        if (templateDataDir) {
+            dataFile = path.normalize([path.resolve(templateDataDir + '/data/', getFileName(dMKey)), '.json'].join(''));
+        }
 
-                var data = (res.getBody().toString());
+        if (fs.existsSync(valDataFile) && !fs.lstatSync(valDataFile).isDirectory()) {
+            try {
+                data = load.sync(valDataFile);
+            } catch (e) {
+                this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+                return cb();
+            }
 
-                try {
-                    data = JSON.parse(data);
-                    compileAsync.apply(_me, [data, file, enc, cb]);
-                } catch (e) {
-                    self.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
-                    return cb();
-                }
-            });
-        } else {
             compileAsync.apply(_me, [data, file, enc, cb]);
+        } else if (fs.existsSync(dataFile)) {
+
+            try {
+                data = load.sync(dataFile);
+            } catch (e) {
+                this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+                return cb();
+            }
+
+            compileAsync.apply(_me, [data, file, enc, cb]);
+        } else {
+            if (/^http(s|):\/\//gi.test(dMVal)) {
+
+                 request('GET', dMVal).done(function (res) {
+
+                    var data = (res.getBody().toString());
+
+                    try {
+                        data = JSON.parse(data);
+                    } catch (e) {
+                        self.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
+                        return cb();
+                    }
+
+                     compileAsync.apply(_me, [data, file, enc, cb]);
+                });
+            } else {
+
+                compileAsync.apply(_me, [data, file, enc, cb]);
+            }
         }
     });
 }

@@ -77,25 +77,28 @@ function render(options) {
     let rootDir = options.rootDir || '';
     let constPath = options.constPath || '';
     let commonConst = null;
+    let commonConstTemp = {};
+    let commonConstRoot = {};
 
     let constPathTemp = path.resolve(templateDataDir, constPath);
     let constPathRoot = path.resolve(rootDir, constPath);
 
     try {
         if (options.constPath) {
-            switch (true) {
-                case fs.existsSync(constPathTemp):
-                    commonConst = load.sync(constPathTemp);
-                    break;
-                case fs.existsSync(constPathRoot):
-                    commonConst = load.sync(constPathRoot);
-                    break;
+            if (fs.existsSync(constPathTemp)) {
+                commonConstTemp = load.sync(constPathTemp);
+            }
+
+            if (fs.existsSync(constPathRoot)) {
+                commonConstRoot = load.sync(constPathRoot);
             }
         }
     } catch (e) {
         this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
         return cb();
     }
+
+    commonConst = Object.assign(commonConstRoot, commonConstTemp);
 
     return through.obj(function (file, enc, cb) {
 
@@ -171,7 +174,7 @@ function render(options) {
         } else {
             if (/^http(s|):\/\//gi.test(dMVal)) {
 
-                 request('GET', dMVal).done(function (res) {
+                request('GET', dMVal).done(function (res) {
 
                     var data = (res.getBody().toString());
 
@@ -182,7 +185,7 @@ function render(options) {
                         return cb();
                     }
 
-                     compileAsync.apply(_me, [data, file, enc, cb]);
+                    compileAsync.apply(_me, [data, file, enc, cb]);
                 });
             } else {
 

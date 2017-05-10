@@ -145,12 +145,15 @@ function render(options) {
 
         let dM = getDataManifestVal(dataManifest, file.path, baseDir);
         let dMVal = dM.value;
-        let dMKey = dM.key.replace(/[\/\\]/gi, '-');
+        let dMKey = dM.key.replace(/[\/\\]/gi, '@');
         var valDataFile = path.resolve(templateDataDir, dMVal);
+        dMKey = dMKey.replace(/^\.+/gi, '');
 
         if (templateDataDir) {
             dataFile = path.normalize([path.resolve(templateDataDir + '/data/', getFileName(dMKey)), '.json'].join(''));
         }
+
+        console.log(dataFile);
 
         if (fs.existsSync(valDataFile) && !fs.lstatSync(valDataFile).isDirectory()) {
             try {

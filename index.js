@@ -143,7 +143,7 @@ function render(options) {
             return cb();
         };
 
-        let dM = getDataManifestVal(dataManifest, file.path, baseDir);
+        let dM = getDataManifestVal(dataManifest, file.path, templateDataDir);
         let dMVal = dM.value;
         let dMKey = dM.key.replace(/[\/\\]/gi, '@');
         var valDataFile = path.resolve(templateDataDir, dMVal);

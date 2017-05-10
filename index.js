@@ -153,8 +153,6 @@ function render(options) {
             dataFile = path.normalize([path.resolve(templateDataDir + '/data/', getFileName(dMKey)), '.json'].join(''));
         }
 
-        console.log(dataFile);
-
         if (fs.existsSync(valDataFile) && !fs.lstatSync(valDataFile).isDirectory()) {
             try {
                 data = load.sync(valDataFile);

@@ -94,8 +94,10 @@ function render(options) {
             }
         }
     } catch (e) {
+      return through.obj(function (file, enc, cb) {
         this.emit('error', new gutil.PluginError('gulp-smarty4js-render', e));
         return cb();
+      });
     }
 
     commonConst = Object.assign(commonConstRoot, commonConstTemp);

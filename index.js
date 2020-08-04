@@ -147,7 +147,7 @@ function render(options) {
 
         let dM = getDataManifestVal(dataManifest, file.path, templateDataDir);
         let dMVal = dM.value;
-        let dMKey = dM.key.replace(/[\/\\]/gi, '@');
+        let dMKey = dM.key.replace(/[\/\\]/gi, '$');
         var valDataFile = path.resolve(templateDataDir, dMVal);
         dMKey = dMKey.replace(/^\.+/gi, '');
 
